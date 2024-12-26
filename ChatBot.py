@@ -79,6 +79,9 @@ def main():
         client_socket.connect((SERVER_HOST, SERVER_PORT))
         print(f"[連線成功] 已連接到伺服器 {SERVER_HOST}:{SERVER_PORT}")
 
+        # 發送預設暱稱
+        client_socket.send(BOT_NAME.encode('utf-8'))
+
         # 啟動接收訊息的執行緒
         threading.Thread(target=receive_messages, args=(client_socket,)).start()
 
