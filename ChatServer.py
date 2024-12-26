@@ -2,7 +2,7 @@ import socket
 import threading
 
 # 設定伺服器參數
-HOST = '0.0.0.0'
+HOST = '127.0.0.1'
 PORT = 12345
 clients = {}  # 儲存客戶端 socket 與暱稱的對應關係
 
