@@ -12,14 +12,16 @@ SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 12345
 
 # 客戶端名稱
-BOT_NAME = "ChatBot"
+BOT_NAME = "小拉"
 
 # 與 Ollama 交互的函數
-def get_ollama_response(prompt):
+def get_ollama_response(prompt, context):
     try:
+         # 將前 5 條訊息作為上下文傳遞給語言模型
+        combined_prompt = f"聊天上下文：\n{context}\n使用者的訊息：{prompt}"
         response = requests.post(
             OLLAMA_URL,
-            json={"model": OLLAMA_MODEL, "prompt": prompt},
+            json={"model": OLLAMA_MODEL, "prompt": combined_prompt},
             stream=True  # 啟用流式回應
         )
         if response.status_code == 200:
@@ -38,14 +40,24 @@ def get_ollama_response(prompt):
 
 # 接收訊息的執行緒
 def receive_messages(client_socket):
+    chat_history = []  # 儲存聊天記錄
     while True:
         try:
             message = client_socket.recv(1024).decode('utf-8')
             if message:
                 print(f"[收到訊息]: {message}")
+                chat_history.append(message)  # 儲存訊息到聊天記錄
+
+                # 保留最近 5 條訊息
+                if len(chat_history) > 5:
+                    chat_history.pop(0)
+
                 # 如果訊息不是來自 ChatBot 自己，則處理
-                if not message.startswith(f"{BOT_NAME}:"):
-                    response = get_ollama_response(message)
+                if "小拉" in message.lower():
+                    # 將最近 5 條訊息作為上下文傳遞給語言模型
+                    context = "\n".join(chat_history)
+                    clean_message = message.lower().replace("小拉", "").strip()
+                    response = get_ollama_response(clean_message, context)
                     send_message(client_socket, f"{BOT_NAME}: {response}")
         except Exception as e:
             print(f"[錯誤] 與伺服器斷開連線: {e}")
