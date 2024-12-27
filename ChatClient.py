@@ -104,13 +104,12 @@ class ChatClient:
                 self.is_connected = False
                 break
 
-    def send_message(self, event=None):
+    def send_message(self, event=None): 
         message = self.input_area.get()
         if message and self.is_connected:
             try:
-                formatted_message = f"{self.nickname}: {message}"
-                self.client_socket.send(formatted_message.encode('utf-8'))
-                self.display_message(formatted_message, tag="self")
+                self.client_socket.send(message.encode('utf-8'))
+                self.display_message(f"{self.nickname}: {message}", tag="self")
                 self.input_area.delete(0, tk.END)
             except:
                 self.display_message("[系統訊息] 訊息無法發送，請檢查連線", tag="other")
