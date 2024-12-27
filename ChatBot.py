@@ -8,7 +8,7 @@ OLLAMA_URL = "http://127.0.0.1:11434/api/generate"
 OLLAMA_MODEL = "gemma:2b"
 
 # 伺服器配置
-SERVER_HOST = "127.0.0.1"
+SERVER_HOST = "172.20.10.7"
 SERVER_PORT = 12345
 
 # 客戶端名稱
@@ -18,7 +18,12 @@ BOT_NAME = "小拉"
 def get_ollama_response(prompt, context):
     try:
          # 將前 5 條訊息作為上下文傳遞給語言模型
-        combined_prompt = f"聊天上下文：\n{context}\n使用者的訊息：{prompt}"
+        combined_prompt = f"""
+        你是一個名叫小拉的虛擬助理，請根據以下聊天記錄回答使用者的問題。
+        聊天上下文：
+        {context}
+        使用者的訊息：{prompt}
+        """
         response = requests.post(
             OLLAMA_URL,
             json={"model": OLLAMA_MODEL, "prompt": combined_prompt},
@@ -56,8 +61,8 @@ def receive_messages(client_socket):
                 if "小拉" in message.lower():
                     # 將最近 5 條訊息作為上下文傳遞給語言模型
                     context = "\n".join(chat_history)
-                    clean_message = message.lower().replace("小拉", "").strip()
-                    response = get_ollama_response(clean_message, context)
+                    # clean_message = message.lower().replace("小拉", "").strip()
+                    response = get_ollama_response(message, context)
                     send_message(client_socket, f"{BOT_NAME}: {response}")
         except Exception as e:
             print(f"[錯誤] 與伺服器斷開連線: {e}")
