@@ -1,5 +1,7 @@
 import socket
 import threading
+import sys
+import signal
 
 # 設定伺服器參數
 HOST = '127.0.0.1'
@@ -23,7 +25,7 @@ def handle_client(client_socket, client_address):
     # 儲存暱稱並通知其他使用者
     clients[client_socket] = nickname
     print(f"[暱稱設定] {nickname} 已加入聊天室")
-    broadcast(f"[系統訊息] {nickname} 加入聊天室！", client_socket)
+    broadcast(f"[系統訊息] {nickname} 加入聊天室！")
 
     # 處理訊息
     while True:
@@ -31,7 +33,7 @@ def handle_client(client_socket, client_address):
             message = client_socket.recv(1024).decode('utf-8')
             if message:
                 print(f"[收到訊息] {nickname}: {message}")
-                broadcast(message, client_socket)  # 不再重複添加暱稱
+                broadcast(message, client_socket)
             else:
                 remove_client(client_socket)
                 break
@@ -44,12 +46,19 @@ def broadcast(message, sender_socket=None):
     廣播訊息給所有連接的客戶端。
     sender_socket: 發送訊息的客戶端 socket，若為 None，則不排除任何人。
     """
-    for client in clients:
-        if client != sender_socket:
+    if sender_socket == None: # 廣播
+        for client in clients:
             try:
                 client.send(message.encode('utf-8'))
             except:
                 remove_client(client)
+    else: # 私訊
+        for client in clients:
+            if client != sender_socket:
+                try:
+                    client.send(f"{clients[sender_socket]}: {message}".encode('utf-8'))
+                except:
+                    remove_client(client)
 
 def remove_client(client_socket):
     """
@@ -58,10 +67,28 @@ def remove_client(client_socket):
     if client_socket in clients:
         nickname = clients[client_socket]
         print(f"[斷線] {nickname} 離開聊天室")
-        broadcast(f"[系統訊息] {nickname} 離開聊天室！", client_socket)
+        broadcast(f"[系統訊息] {nickname} 離開聊天室！")
         del clients[client_socket]
     client_socket.close()
 
+def server_cleanup(signum, frame):
+    """
+    當伺服器收到終止信號時，進行清理工作。
+    """
+    print("\n[伺服器關閉] 接收到終止信號，正在進行清理工作...")
+    for client in clients:
+        try:
+            client.close()
+        except Exception as e:
+            print(f"[錯誤] 關閉客戶端連線時出現問題: {e}")
+    try:
+        server_socket.close()
+    except Exception as e:
+        print(f"[錯誤] 關閉伺服器連線時出現問題: {e}")
+    sys.exit(0)
+
+# 設定處理 SIGINT 信號，並執行 server_cleanup 函數
+signal.signal(signal.SIGINT, server_cleanup)
 # 啟動伺服器
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((HOST, PORT))
