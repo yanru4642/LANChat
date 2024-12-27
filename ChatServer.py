@@ -4,7 +4,7 @@ import sys
 import signal
 
 # 設定伺服器參數
-HOST = '127.0.0.1'
+HOST = '0.0.0.0'
 PORT = 12345
 clients = {}  # 儲存客戶端 socket 與暱稱的對應關係
 
@@ -49,7 +49,8 @@ def broadcast(message, sender_socket=None):
     if sender_socket == None: # 廣播
         for client in clients:
             try:
-                client.send(message.encode('utf-8'))
+                if clients[client] != "小拉":
+                    client.send(message.encode('utf-8'))
             except:
                 remove_client(client)
     else: # 私訊
@@ -66,9 +67,9 @@ def remove_client(client_socket):
     """
     if client_socket in clients:
         nickname = clients[client_socket]
-        print(f"[斷線] {nickname} 離開聊天室")
-        broadcast(f"[系統訊息] {nickname} 離開聊天室！")
         del clients[client_socket]
+        print(f"[斷線] {nickname} 離開聊天室")
+        broadcast(f"[系統訊息] {nickname} 離開聊天室！") 
     client_socket.close()
 
 def server_cleanup(signum, frame):

@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import scrolledtext, simpledialog, messagebox
 
 # 設定伺服器 IP 和埠
-SERVER_HOST = '127.0.0.1'
+SERVER_HOST = '172.20.10.7'
 SERVER_PORT = 12345
 
 class ChatClient:
